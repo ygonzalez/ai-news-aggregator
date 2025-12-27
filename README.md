@@ -184,6 +184,40 @@ Items are classified into these categories:
 - Research
 - Industry
 
+## LangSmith Tracing
+
+Enable LangSmith to trace pipeline runs and debug LLM calls.
+
+### Setup
+
+1. Get an API key from [smith.langchain.com](https://smith.langchain.com/settings)
+2. Update your `.env`:
+
+```bash
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2_pt_...
+LANGSMITH_PROJECT=ai-news-aggregator
+```
+
+3. Run the pipeline - traces will appear in the LangSmith UI
+
+### Fetch Traces Locally
+
+Use `langsmith-fetch` to export traces for analysis:
+
+```bash
+# Fetch recent traces with metadata
+uv run langsmith-fetch traces ./langsmith_traces --limit 10 --include-metadata --include-feedback
+```
+
+Traces are saved as JSON files with run metadata including:
+- Duration and status
+- Token usage (prompt/completion)
+- Costs
+- Custom metadata
+
+See the [langsmith-fetch docs](https://docs.smith.langchain.com/langsmith/langsmith-fetch) for more options.
+
 ## Development
 
 ### Run Tests

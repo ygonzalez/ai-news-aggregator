@@ -10,6 +10,7 @@ dependencies = [
     "langchain-anthropic>=0.3.0", # Claude for summarization
     "langchain-openai>=0.2.0", # OpenAI embeddings only
     "langsmith>=0.1.0", # Tracing/observability
+    "langsmith-fetch>=0.1.0", # Fetch shared prompts from LangSmith
     # Data collection
     "feedparser>=6.0.0", # RSS parsing
     "google-api-python-client>=2.0", # Gmail API

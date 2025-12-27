@@ -1,0 +1,30 @@
+{
+  "trace_id": "019b61ec-d709-73a3-ac5d-0e7a62f1a75d",
+  "messages": [],
+  "metadata": {
+    "status": "success",
+    "start_time": "2025-12-27T22:27:50.154062",
+    "end_time": "2025-12-27T22:28:59.519985",
+    "duration_ms": 69365,
+    "custom_metadata": {
+      "LANGSMITH_ENDPOINT": "https://api.smith.langchain.com",
+      "LANGSMITH_PROJECT": "ai-news-aggregator",
+      "LANGSMITH_TRACING": "true",
+      "ls_run_depth": 0,
+      "revision_id": "dfd6dd1-dirty"
+    },
+    "token_usage": {
+      "prompt_tokens": 48643,
+      "completion_tokens": 13490,
+      "total_tokens": 62133
+    },
+    "costs": {
+      "prompt_cost": "0.145929",
+      "completion_cost": "0.20235",
+      "total_cost": "0.348279"
+    },
+    "first_token_time": null,
+    "feedback_stats": {}
+  },
+  "feedback": []
+}
