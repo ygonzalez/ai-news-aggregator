@@ -6,12 +6,59 @@ Environment variables are loaded from:
 2. System environment variables (override .env)
 
 Usage:
-    from aggregator.config import settings
+    from aggregator.config import get_settings
+    settings = get_settings()
     print(settings.database_url)
 """
 
-from pydantic import Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# === Data Source Configuration ===
+# These are Pydantic models (not settings) - they define the structure
+# of RSS feeds and Gmail senders. Defaults are provided below.
+
+
+class RssFeedConfig(BaseModel):
+    """Configuration for a single RSS feed."""
+
+    name: str
+    url: str
+
+
+class GmailSenderConfig(BaseModel):
+    """Configuration for a Gmail newsletter sender."""
+
+    name: str
+    email: str
+
+
+# Default RSS feeds (from design doc)
+DEFAULT_RSS_FEEDS: list[RssFeedConfig] = [
+    RssFeedConfig(name="LangChain Blog", url="https://blog.langchain.dev/rss/"),
+    RssFeedConfig(name="OpenAI Blog", url="https://openai.com/blog/rss.xml"),
+    RssFeedConfig(name="Google AI Blog", url="https://blog.google/technology/ai/rss/"),
+    RssFeedConfig(
+        name="Anthropic Engineering",
+        url="https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/anthropic_engineering.xml",
+    ),
+    RssFeedConfig(
+        name="Anthropic News",
+        url="https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/anthropic_news.xml",
+    ),
+    RssFeedConfig(name="Lenny's Newsletter", url="https://www.lennysnewsletter.com/feed"),
+    RssFeedConfig(name="Hugo Bowne-Anderson", url="https://hugobowne.substack.com/feed"),
+    RssFeedConfig(name="Decoding AI", url="https://www.decodingai.com/feed"),
+    RssFeedConfig(name="Ben's Bites", url="https://www.bensbites.com/feed"),
+    RssFeedConfig(name="One Useful Thing", url="https://www.oneusefulthing.org/feed"),
+]
+
+# Default Gmail senders (from design doc)
+DEFAULT_GMAIL_SENDERS: list[GmailSenderConfig] = [
+    GmailSenderConfig(name="TLDR AI", email="dan@tldrnewsletter.com"),
+    GmailSenderConfig(name="The Batch", email="thebatch@deeplearning.ai"),
+]
 
 
 class Settings(BaseSettings):
