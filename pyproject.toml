@@ -1,0 +1,61 @@
+[project]
+name = "aggregator"
+version = "0.1.0"
+description = "AI News Aggregator - LangGraph-based news collector with RSS and Gmail sources"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    # LangGraph orchestration
+    "langgraph>=0.2.0",
+    "langchain-anthropic>=0.3.0",  # Claude for summarization
+    "langchain-openai>=0.2.0",      # OpenAI embeddings only
+    "langsmith>=0.1.0",             # Tracing/observability
+
+    # Data collection
+    "feedparser>=6.0.0",            # RSS parsing
+    "google-api-python-client>=2.0", # Gmail API
+    "google-auth-oauthlib>=1.0",    # Gmail OAuth
+    "httpx>=0.27.0",                # Async HTTP client
+
+    # Database
+    "asyncpg>=0.29.0",              # Async PostgreSQL driver
+    "pgvector>=0.3.0",              # Vector similarity search
+
+    # API
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+
+    # Core utilities
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",       # Environment variable management
+    "structlog>=24.0.0",            # Structured logging
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",       # Async test support
+    "pytest-httpx>=0.30.0",         # Mock httpx requests
+    "ruff>=0.5.0",                  # Linting + formatting
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"               # Automatically handle async tests
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]      # Errors, pyflakes, isort, pyupgrade
+
+# Build system - tells uv/pip how to install this package
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Tell hatch where to find our package (src layout)
+[tool.hatch.build.targets.wheel]
+packages = ["src/aggregator"]
