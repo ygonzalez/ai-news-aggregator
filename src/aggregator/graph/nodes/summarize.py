@@ -87,12 +87,13 @@ Guidelines:
 - Focus on practical implications for AI/ML practitioners
 - Highlight technical details, new capabilities, or industry impact
 - Be concise but comprehensive
+- For key_points: provide exactly 3-5 distinct takeaways as separate strings in a JSON array
+- For topics: use only values from the allowed list
 - Score relevance based on usefulness to AI/ML practitioners:
   - 0.0-0.3: Off-topic or tangential (business news with no technical content)
   - 0.3-0.5: Marginally relevant (general tech news mentioning AI)
   - 0.5-0.7: Relevant (AI industry news, product announcements)
   - 0.7-1.0: Highly relevant (technical content, research, tools, best practices)
-- Only use topics from the provided list
 """
 
 
@@ -100,67 +101,86 @@ async def summarize_single_item(
     item: RawItem,
     llm: ChatAnthropic,
     embeddings_model: OpenAIEmbeddings | None = None,
+    max_retries: int = 2,
 ) -> ProcessedItem | None:
     """
-    Process a single item with Claude.
+    Process a single item with Claude with retry logic.
 
     Args:
         item: Raw item to process
         llm: Claude model with structured output
         embeddings_model: Optional OpenAI embeddings model
+        max_retries: Number of retries on validation errors
 
     Returns:
-        ProcessedItem or None if processing fails
+        ProcessedItem or None if processing fails after all retries
     """
+    from pydantic import ValidationError
+
     log = logger.bind(item_id=item["item_id"], title=item.get("title"))
 
-    try:
-        # Format prompt
-        prompt = SUMMARIZE_PROMPT.format(
-            title=item.get("title") or "No title",
-            content=item["content"][:8000],  # Truncate very long content
-            source_type=item["source_type"],
-            source_id=item["source_id"],
-            published_at=item["published_at"].isoformat(),
-        )
+    # Format prompt
+    prompt = SUMMARIZE_PROMPT.format(
+        title=item.get("title") or "No title",
+        content=item["content"][:8000],  # Truncate very long content
+        source_type=item["source_type"],
+        source_id=item["source_id"],
+        published_at=item["published_at"].isoformat(),
+    )
 
-        # Call Claude with structured output
-        result: ArticleSummary = await llm.ainvoke(prompt)
+    # Retry loop for transient validation errors
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            # Call Claude with structured output
+            result: ArticleSummary = await llm.ainvoke(prompt)
 
-        log.debug("Claude summarization complete", relevance=result.relevance_score)
+            log.debug("Claude summarization complete", relevance=result.relevance_score, attempt=attempt)
 
-        # Generate embedding if model provided
-        embedding = None
-        if embeddings_model:
-            # Combine title and summary for embedding
-            text_for_embedding = f"{result.title}\n\n{result.summary}"
-            embedding_result = await embeddings_model.aembed_query(text_for_embedding)
-            embedding = embedding_result
+            # Generate embedding if model provided
+            embedding = None
+            if embeddings_model:
+                text_for_embedding = f"{result.title}\n\n{result.summary}"
+                embedding_result = await embeddings_model.aembed_query(text_for_embedding)
+                embedding = embedding_result
 
-        # Extract source info (may be merged from multiple sources)
-        raw_metadata = item.get("raw_metadata", {})
-        source_types = raw_metadata.get("merged_from_sources", [item["source_type"]])
-        original_urls = raw_metadata.get("all_urls", [item["url"]] if item.get("url") else [])
+            # Extract source info (may be merged from multiple sources)
+            raw_metadata = item.get("raw_metadata", {})
+            source_types = raw_metadata.get("merged_from_sources", [item["source_type"]])
+            original_urls = raw_metadata.get("all_urls", [item["url"]] if item.get("url") else [])
 
-        processed: ProcessedItem = {
-            "item_id": item["item_id"],
-            "title": result.title,
-            "summary": result.summary,
-            "key_points": result.key_points,
-            "topics": result.topics,
-            "relevance_score": result.relevance_score,
-            "original_urls": original_urls,
-            "source_types": source_types if isinstance(source_types, list) else [source_types],
-            "published_at": item["published_at"],
-            "processed_at": datetime.now(UTC),
-            "embedding": embedding,
-        }
+            processed: ProcessedItem = {
+                "item_id": item["item_id"],
+                "title": result.title,
+                "summary": result.summary,
+                "key_points": result.key_points,
+                "topics": result.topics,
+                "relevance_score": result.relevance_score,
+                "original_urls": original_urls,
+                "source_types": source_types if isinstance(source_types, list) else [source_types],
+                "published_at": item["published_at"],
+                "processed_at": datetime.now(UTC),
+                "embedding": embedding,
+            }
 
-        return processed
+            return processed
 
-    except Exception as e:
-        log.error("Failed to summarize item", error=str(e), error_type=type(e).__name__)
-        return None
+        except ValidationError as e:
+            # Retry on validation errors (Claude returned wrong format)
+            last_error = e
+            if attempt < max_retries:
+                log.warning("Validation error, retrying", attempt=attempt + 1, error=str(e)[:100])
+                await asyncio.sleep(0.5)  # Brief delay before retry
+            continue
+
+        except Exception as e:
+            # Don't retry on other errors (API errors, etc.)
+            log.error("Failed to summarize item", error=str(e), error_type=type(e).__name__)
+            return None
+
+    # All retries exhausted
+    log.error("Failed after retries", error=str(last_error), retries=max_retries)
+    return None
 
 
 async def summarize(
