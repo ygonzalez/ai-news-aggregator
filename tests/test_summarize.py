@@ -10,7 +10,7 @@ Key testing strategies:
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -39,7 +39,7 @@ def make_raw_item(
         content=content,
         source_type=source_type,
         source_id=source_id,
-        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=timezone.utc),
+        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=UTC),
         url=url,
         author="Test Author",
         raw_metadata={"feed_name": "Test Feed"},
@@ -164,7 +164,7 @@ class TestSummarizeSingleItem:
 
     async def test_preserves_timestamps(self, mock_llm):
         """Should preserve published_at and add processed_at."""
-        original_time = datetime(2024, 12, 20, 10, 0, 0, tzinfo=timezone.utc)
+        original_time = datetime(2024, 12, 20, 10, 0, 0, tzinfo=UTC)
         item = make_raw_item(published_at=original_time)
 
         result = await summarize_single_item(item, mock_llm, None)

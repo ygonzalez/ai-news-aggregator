@@ -13,9 +13,8 @@ Note on mocking asyncpg:
 - The transaction() method also returns an async context manager
 """
 
-import json
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -52,8 +51,8 @@ def make_processed_item(
         relevance_score=relevance_score,
         original_urls=["https://example.com/article"] if original_urls is None else original_urls,
         source_types=["rss"] if source_types is None else source_types,
-        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=timezone.utc),
-        processed_at=processed_at or datetime(2024, 12, 23, 12, 0, 0, tzinfo=timezone.utc),
+        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=UTC),
+        processed_at=processed_at or datetime(2024, 12, 23, 12, 0, 0, tzinfo=UTC),
         embedding=embedding,
     )
 
@@ -168,7 +167,7 @@ class TestPersistNode:
         state = {
             "processed_items": items,
             "run_id": "test-run",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
         }
 
         async def mock_get_pool():
@@ -189,7 +188,7 @@ class TestPersistNode:
         state = {
             "processed_items": items,
             "run_id": "test-run",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
         }
 
         # Mock: first and third succeed, second fails
@@ -217,7 +216,7 @@ class TestPersistNode:
         state = {
             "processed_items": [make_processed_item()],
             "run_id": "test-run-123",
-            "run_date": datetime(2024, 12, 23, tzinfo=timezone.utc),
+            "run_date": datetime(2024, 12, 23, tzinfo=UTC),
         }
 
         async def mock_get_pool():
@@ -234,7 +233,7 @@ class TestPersistNode:
         state = {
             "processed_items": [make_processed_item()],
             "run_id": "test",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
         }
 
         async def mock_get_pool():
@@ -262,8 +261,8 @@ class TestGetRecentItems:
             "relevance_score": 0.8,
             "original_urls": '["https://example.com"]',
             "source_types": '["rss"]',
-            "published_at": datetime(2024, 12, 23, tzinfo=timezone.utc),
-            "processed_at": datetime(2024, 12, 23, 12, 0, tzinfo=timezone.utc),
+            "published_at": datetime(2024, 12, 23, tzinfo=UTC),
+            "processed_at": datetime(2024, 12, 23, 12, 0, tzinfo=UTC),
         }
         mock_connection.fetch = AsyncMock(return_value=[mock_row])
 

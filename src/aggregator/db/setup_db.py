@@ -139,6 +139,7 @@ CREATE TRIGGER update_news_items_updated_at
 # SETUP FUNCTIONS
 # ============================================================
 
+
 async def setup_database() -> None:
     """
     Set up the database schema.

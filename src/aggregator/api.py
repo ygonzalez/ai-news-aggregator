@@ -23,7 +23,7 @@ Usage:
 """
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 import structlog
@@ -185,7 +185,7 @@ async def health_check():
         status=status,
         database=db_healthy,
         pgvector=pgvector_available,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
     )
 
 
@@ -206,9 +206,11 @@ async def trigger_run(
     Returns:
         Run status and ID for tracking
     """
-    run_id = f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+    run_id = f"run_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
 
-    logger.info("Pipeline run triggered via API", run_id=run_id, backfill_days=request.backfill_days)
+    logger.info(
+        "Pipeline run triggered via API", run_id=run_id, backfill_days=request.backfill_days
+    )
 
     try:
         # Run synchronously for now (small scale)
@@ -236,9 +238,7 @@ async def trigger_run(
 async def get_items(
     limit: Annotated[int, Query(ge=1, le=100, description="Max items to return")] = 20,
     topic: Annotated[str | None, Query(description="Filter by topic")] = None,
-    min_relevance: Annotated[
-        float, Query(ge=0, le=1, description="Minimum relevance score")
-    ] = 0.0,
+    min_relevance: Annotated[float, Query(ge=0, le=1, description="Minimum relevance score")] = 0.0,
 ):
     """
     Get recent news items.

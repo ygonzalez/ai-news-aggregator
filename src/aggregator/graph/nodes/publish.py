@@ -19,7 +19,7 @@ LangGraph Integration:
 - Output: {"publication_payload": {...}}
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -137,7 +137,7 @@ async def publish(state: AggregatorState) -> dict:
     """
     items = state.get("processed_items", [])
     run_id = state.get("run_id", "unknown")
-    run_date = state.get("run_date", datetime.now(timezone.utc))
+    run_date = state.get("run_date", datetime.now(UTC))
 
     logger.info("Creating publication payload", item_count=len(items))
 
@@ -147,19 +147,15 @@ async def publish(state: AggregatorState) -> dict:
         "meta": {
             "run_id": run_id,
             "run_date": run_date.isoformat(),
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "version": "1.0",
         },
-
         # Statistics
         "stats": generate_summary_stats(state, items),
-
         # Items grouped by topic (for browsing)
         "by_topic": group_items_by_topic(items),
-
         # Flat list of all items (for iteration)
         "items": [format_item_for_api(item) for item in items],
-
         # Errors (for debugging)
         "errors": [
             {
@@ -191,6 +187,7 @@ def create_publish_node():
     Usage:
         builder.add_node("publish", create_publish_node())
     """
+
     async def node(state: AggregatorState) -> dict:
         return await publish(state)
 

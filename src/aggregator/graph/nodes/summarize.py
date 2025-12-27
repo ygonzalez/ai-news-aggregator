@@ -22,7 +22,7 @@ Rate Limiting:
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 from langchain_anthropic import ChatAnthropic
@@ -42,11 +42,13 @@ logger = structlog.get_logger()
 
 # === Pydantic Schema for Claude's Structured Output ===
 
+
 class ArticleSummary(BaseModel):
     """Schema for Claude's structured output."""
 
     title: str = Field(
-        description="A concise, informative title for the article. Use the original title if appropriate, or generate one if missing."
+        description="A concise, informative title for the article. "
+        "Use the original title if appropriate, or generate one if missing."
     )
     summary: str = Field(
         description="A 2-3 paragraph summary of the main content. Focus on key information, findings, or announcements."
@@ -62,7 +64,8 @@ class ArticleSummary(BaseModel):
         max_length=3,
     )
     relevance_score: float = Field(
-        description="Score from 0-1 indicating relevance to AI/ML practitioners. 0=not relevant, 0.3=marginally relevant, 0.7=relevant, 1.0=highly relevant.",
+        description="Score from 0-1 indicating relevance to AI/ML practitioners. "
+        "0=not relevant, 0.3=marginally relevant, 0.7=relevant, 1.0=highly relevant.",
         ge=0.0,
         le=1.0,
     )
@@ -149,7 +152,7 @@ async def summarize_single_item(
             "original_urls": original_urls,
             "source_types": source_types if isinstance(source_types, list) else [source_types],
             "published_at": item["published_at"],
-            "processed_at": datetime.now(timezone.utc),
+            "processed_at": datetime.now(UTC),
             "embedding": embedding,
         }
 
@@ -265,6 +268,7 @@ def create_summarize_node(
     Returns:
         An async function compatible with LangGraph nodes.
     """
+
     async def node(state: AggregatorState) -> dict:
         return await summarize(
             state,

@@ -8,7 +8,7 @@ Key testing strategies:
 4. Test content extraction from different RSS formats
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -120,7 +120,7 @@ class TestParsedPublishedDate:
         entry = {}
         result = parse_published_date(entry)
         # Should be recent (within last minute)
-        assert (datetime.now(timezone.utc) - result).total_seconds() < 60
+        assert (datetime.now(UTC) - result).total_seconds() < 60
 
 
 class TestExtractContent:
@@ -177,7 +177,7 @@ class TestFetchSingleFeed:
             text=SAMPLE_RSS_FEED,
         )
 
-        cutoff = datetime(2024, 12, 1, tzinfo=timezone.utc)
+        cutoff = datetime(2024, 12, 1, tzinfo=UTC)
 
         async with httpx.AsyncClient() as client:
             items, errors = await fetch_single_feed(client, feed_config, cutoff)
@@ -195,7 +195,7 @@ class TestFetchSingleFeed:
         )
 
         # Set cutoff to future - should filter out all items
-        cutoff = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        cutoff = datetime(2025, 1, 1, tzinfo=UTC)
 
         async with httpx.AsyncClient() as client:
             items, errors = await fetch_single_feed(client, feed_config, cutoff)
@@ -210,7 +210,7 @@ class TestFetchSingleFeed:
             status_code=404,
         )
 
-        cutoff = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        cutoff = datetime(2024, 1, 1, tzinfo=UTC)
 
         async with httpx.AsyncClient() as client:
             items, errors = await fetch_single_feed(client, feed_config, cutoff)
@@ -227,7 +227,7 @@ class TestFetchSingleFeed:
             text=SAMPLE_ATOM_FEED,
         )
 
-        cutoff = datetime(2024, 12, 1, tzinfo=timezone.utc)
+        cutoff = datetime(2024, 12, 1, tzinfo=UTC)
 
         async with httpx.AsyncClient() as client:
             items, errors = await fetch_single_feed(client, feed_config, cutoff)
@@ -260,7 +260,7 @@ class TestRssCollector:
             )
 
         state = {
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
             "backfill_days": 7,
         }
 
@@ -283,7 +283,7 @@ class TestRssCollector:
         httpx_mock.add_response(url=test_feeds[1].url, status_code=500)
 
         state = {
-            "run_date": datetime(2024, 12, 25, tzinfo=timezone.utc),
+            "run_date": datetime(2024, 12, 25, tzinfo=UTC),
             "backfill_days": 7,
         }
 
@@ -306,7 +306,7 @@ class TestRssCollector:
         )
 
         state = {
-            "run_date": datetime(2024, 12, 25, tzinfo=timezone.utc),
+            "run_date": datetime(2024, 12, 25, tzinfo=UTC),
             "backfill_days": 7,
         }
 

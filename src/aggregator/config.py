@@ -14,7 +14,6 @@ Usage:
 from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # === Data Source Configuration ===
 # These are Pydantic models (not settings) - they define the structure
 # of RSS feeds and Gmail senders. Defaults are provided below.
@@ -126,11 +125,13 @@ class Settings(BaseSettings):
     @property
     def gmail_configured(self) -> bool:
         """Check if Gmail credentials are fully configured."""
-        return all([
-            self.gmail_client_id,
-            self.gmail_client_secret,
-            self.gmail_refresh_token,
-        ])
+        return all(
+            [
+                self.gmail_client_id,
+                self.gmail_client_secret,
+                self.gmail_refresh_token,
+            ]
+        )
 
 
 # Singleton instance - import this in other modules

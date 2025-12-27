@@ -42,7 +42,7 @@ Usage:
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 from langgraph.graph import END, START, StateGraph
@@ -162,11 +162,11 @@ async def run_pipeline(
     """
     # Generate unique run ID if not provided
     if run_id is None:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         unique_suffix = uuid.uuid4().hex[:8]
         run_id = f"run_{timestamp}_{unique_suffix}"
 
-    run_date = datetime.now(timezone.utc)
+    run_date = datetime.now(UTC)
 
     logger.info(
         "Starting pipeline run",

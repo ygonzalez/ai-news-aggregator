@@ -8,7 +8,7 @@ Key testing strategies:
 4. Test run ID generation
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -57,6 +57,7 @@ class TestGetGraph:
         """Should return the same cached graph instance."""
         # Reset the cache first
         import aggregator.graph.orchestrator as orchestrator
+
         orchestrator._cached_graph = None
 
         graph1 = get_graph()
@@ -67,6 +68,7 @@ class TestGetGraph:
     def test_creates_graph_on_first_call(self):
         """Should create graph on first call if not cached."""
         import aggregator.graph.orchestrator as orchestrator
+
         orchestrator._cached_graph = None
 
         graph = get_graph()
@@ -145,6 +147,7 @@ class TestRunAggregator:
         """Should use the cached graph."""
         # Reset cache
         import aggregator.graph.orchestrator as orchestrator
+
         orchestrator._cached_graph = None
 
         mock_graph = MagicMock()
@@ -206,7 +209,7 @@ class TestIntegrationWithMockedNodes:
                         "content": "Test content",
                         "source_type": "rss",
                         "source_id": "https://example.com/feed",
-                        "published_at": datetime.now(timezone.utc),
+                        "published_at": datetime.now(UTC),
                         "url": "https://example.com/article",
                         "author": "Test Author",
                         "raw_metadata": {},
@@ -225,7 +228,7 @@ class TestIntegrationWithMockedNodes:
                         "content": "Test content",
                         "source_type": "rss",
                         "source_id": "https://example.com/feed",
-                        "published_at": datetime.now(timezone.utc),
+                        "published_at": datetime.now(UTC),
                         "url": "https://example.com/article",
                         "author": "Test Author",
                         "raw_metadata": {},
@@ -246,8 +249,8 @@ class TestIntegrationWithMockedNodes:
                         "relevance_score": 0.8,
                         "original_urls": ["https://example.com/article"],
                         "source_types": ["rss"],
-                        "published_at": datetime.now(timezone.utc),
-                        "processed_at": datetime.now(timezone.utc),
+                        "published_at": datetime.now(UTC),
+                        "processed_at": datetime.now(UTC),
                         "embedding": None,
                     }
                 ]

@@ -8,9 +8,7 @@ Key testing strategies:
 4. Test error inclusion
 """
 
-from datetime import datetime, timezone
-
-import pytest
+from datetime import UTC, datetime
 
 from aggregator.graph.nodes.publish import (
     format_item_for_api,
@@ -47,8 +45,8 @@ def make_processed_item(
         relevance_score=relevance_score,
         original_urls=["https://example.com/article"] if original_urls is None else original_urls,
         source_types=["rss"] if source_types is None else source_types,
-        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=timezone.utc),
-        processed_at=processed_at or datetime(2024, 12, 23, 12, 0, 0, tzinfo=timezone.utc),
+        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=UTC),
+        processed_at=processed_at or datetime(2024, 12, 23, 12, 0, 0, tzinfo=UTC),
         embedding=None,  # Not included in API output anyway
     )
 
@@ -59,8 +57,8 @@ class TestFormatItemForApi:
     def test_converts_datetimes_to_iso(self):
         """Should convert datetime objects to ISO strings."""
         item = make_processed_item(
-            published_at=datetime(2024, 12, 23, 10, 0, 0, tzinfo=timezone.utc),
-            processed_at=datetime(2024, 12, 23, 12, 0, 0, tzinfo=timezone.utc),
+            published_at=datetime(2024, 12, 23, 10, 0, 0, tzinfo=UTC),
+            processed_at=datetime(2024, 12, 23, 12, 0, 0, tzinfo=UTC),
         )
 
         result = format_item_for_api(item)
@@ -248,7 +246,7 @@ class TestPublishNode:
         state = {
             "processed_items": [make_processed_item()],
             "run_id": "test-run",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
         }
 
         result = await publish(state)
@@ -261,7 +259,7 @@ class TestPublishNode:
         state = {
             "processed_items": [make_processed_item()],
             "run_id": "test-run",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
         }
 
         result = await publish(state)
@@ -275,7 +273,7 @@ class TestPublishNode:
 
     async def test_meta_section(self):
         """Should include metadata in meta section."""
-        run_date = datetime(2024, 12, 23, 10, 0, 0, tzinfo=timezone.utc)
+        run_date = datetime(2024, 12, 23, 10, 0, 0, tzinfo=UTC)
         state = {
             "processed_items": [],
             "run_id": "run-123",
@@ -295,7 +293,7 @@ class TestPublishNode:
         state = {
             "processed_items": [],
             "run_id": "test",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
             "collection_errors": [
                 {
                     "source_type": "rss",
@@ -325,12 +323,12 @@ class TestPublishNode:
         """Should format items for API in the flat list."""
         item = make_processed_item(
             item_id="abc",
-            published_at=datetime(2024, 12, 23, tzinfo=timezone.utc),
+            published_at=datetime(2024, 12, 23, tzinfo=UTC),
         )
         state = {
             "processed_items": [item],
             "run_id": "test",
-            "run_date": datetime.now(timezone.utc),
+            "run_date": datetime.now(UTC),
         }
 
         result = await publish(state)

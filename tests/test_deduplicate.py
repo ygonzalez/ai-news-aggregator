@@ -8,7 +8,7 @@ Key testing strategies:
 4. Test sorting by date
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -38,7 +38,7 @@ def make_raw_item(
         content=content,
         source_type=source_type,
         source_id=source_id,
-        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=timezone.utc),
+        published_at=published_at or datetime(2024, 12, 23, 10, 0, 0, tzinfo=UTC),
         url=url,
         author=author,
         raw_metadata={"feed_name": "Test Feed"},
@@ -76,18 +76,18 @@ class TestMergeDuplicateItems:
     def test_uses_earliest_date(self):
         """Should use the earliest published_at date."""
         older = make_raw_item(
-            published_at=datetime(2024, 12, 20, tzinfo=timezone.utc),
+            published_at=datetime(2024, 12, 20, tzinfo=UTC),
             content="Older article",
         )
         newer = make_raw_item(
-            published_at=datetime(2024, 12, 23, tzinfo=timezone.utc),
+            published_at=datetime(2024, 12, 23, tzinfo=UTC),
             content="Newer article with more content",
         )
 
         result = merge_duplicate_items([newer, older])
 
         # Should use oldest date even though newer has longer content
-        assert result["published_at"] == datetime(2024, 12, 20, tzinfo=timezone.utc)
+        assert result["published_at"] == datetime(2024, 12, 20, tzinfo=UTC)
         # But should still use longer content
         assert "more content" in result["content"]
 
@@ -212,15 +212,15 @@ class TestDeduplicateNode:
             "raw_items": [
                 make_raw_item(
                     item_id="old",
-                    published_at=datetime(2024, 12, 20, tzinfo=timezone.utc),
+                    published_at=datetime(2024, 12, 20, tzinfo=UTC),
                 ),
                 make_raw_item(
                     item_id="new",
-                    published_at=datetime(2024, 12, 25, tzinfo=timezone.utc),
+                    published_at=datetime(2024, 12, 25, tzinfo=UTC),
                 ),
                 make_raw_item(
                     item_id="middle",
-                    published_at=datetime(2024, 12, 22, tzinfo=timezone.utc),
+                    published_at=datetime(2024, 12, 22, tzinfo=UTC),
                 ),
             ]
         }
@@ -241,7 +241,7 @@ class TestDeduplicateNode:
                     source_type="rss",
                     source_id="https://techblog.com/feed",
                     content="Short RSS excerpt...",
-                    published_at=datetime(2024, 12, 23, 10, 0, tzinfo=timezone.utc),
+                    published_at=datetime(2024, 12, 23, 10, 0, tzinfo=UTC),
                 ),
                 make_raw_item(
                     item_id="breaking-news",
@@ -249,14 +249,14 @@ class TestDeduplicateNode:
                     source_type="gmail",
                     source_id="newsletter@techblog.com",
                     content="Full newsletter content with much more detail about the release...",
-                    published_at=datetime(2024, 12, 23, 11, 0, tzinfo=timezone.utc),
+                    published_at=datetime(2024, 12, 23, 11, 0, tzinfo=UTC),
                 ),
                 # Unique article
                 make_raw_item(
                     item_id="other-article",
                     title="Another Story",
                     source_type="rss",
-                    published_at=datetime(2024, 12, 22, tzinfo=timezone.utc),
+                    published_at=datetime(2024, 12, 22, tzinfo=UTC),
                 ),
             ]
         }
@@ -268,8 +268,7 @@ class TestDeduplicateNode:
 
         # Find the merged item
         merged = next(
-            item for item in result["deduplicated_items"]
-            if item["item_id"] == "breaking-news"
+            item for item in result["deduplicated_items"] if item["item_id"] == "breaking-news"
         )
 
         # Should have longer content from Gmail

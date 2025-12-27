@@ -19,7 +19,7 @@ LangGraph Integration:
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 
@@ -142,7 +142,7 @@ async def persist(state: AggregatorState) -> dict:
     """
     items = state.get("processed_items", [])
     run_id = state.get("run_id", "unknown")
-    run_date = state.get("run_date", datetime.now(timezone.utc))
+    run_date = state.get("run_date", datetime.now(UTC))
 
     logger.info("Starting persistence", item_count=len(items), run_id=run_id)
 

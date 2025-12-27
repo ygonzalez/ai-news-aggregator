@@ -50,12 +50,14 @@ async def get_db_pool() -> asyncpg.Pool:
 
     if _pool is None:
         settings = get_settings()
-        logger.info("Creating database connection pool", database_url=settings.database_url[:50] + "...")
+        logger.info(
+            "Creating database connection pool", database_url=settings.database_url[:50] + "..."
+        )
 
         _pool = await asyncpg.create_pool(
             settings.database_url,
-            min_size=2,      # Minimum connections to keep open
-            max_size=10,     # Maximum connections
+            min_size=2,  # Minimum connections to keep open
+            max_size=10,  # Maximum connections
             command_timeout=60,
             # Register custom type codecs for pgvector
             init=_init_connection,

@@ -20,15 +20,16 @@ class RawItem(TypedDict):
     This is the "raw" format - minimal transformation from source.
     The summarize node will enrich this into ProcessedItem.
     """
+
     source_type: Literal["rss", "gmail"]
-    source_id: str          # Feed URL or sender email
-    item_id: str            # Unique identifier (hash of url+title or message_id)
-    title: str | None       # May be missing in some emails
-    content: str            # Main text content
+    source_id: str  # Feed URL or sender email
+    item_id: str  # Unique identifier (hash of url+title or message_id)
+    title: str | None  # May be missing in some emails
+    content: str  # Main text content
     author: str | None
     published_at: datetime
-    url: str | None         # None for emails without links
-    raw_metadata: dict      # Source-specific data (feed info, email headers, etc.)
+    url: str | None  # None for emails without links
+    raw_metadata: dict  # Source-specific data (feed info, email headers, etc.)
 
 
 class ProcessedItem(TypedDict):
@@ -38,17 +39,18 @@ class ProcessedItem(TypedDict):
     This is what gets stored in the database and served via API.
     Contains AI-generated summary, key points, and relevance scoring.
     """
+
     item_id: str
-    title: str                      # LLM may generate title if missing
-    summary: str                    # 2-3 paragraph summary
-    key_points: list[str]           # 3-5 bullet points
-    topics: list[str]               # From predefined topic list
-    relevance_score: float          # 0-1, items < 0.3 are filtered out
-    original_urls: list[str]        # May have multiple if deduplicated
-    source_types: list[str]         # ["rss"], ["gmail"], or ["rss", "gmail"]
+    title: str  # LLM may generate title if missing
+    summary: str  # 2-3 paragraph summary
+    key_points: list[str]  # 3-5 bullet points
+    topics: list[str]  # From predefined topic list
+    relevance_score: float  # 0-1, items < 0.3 are filtered out
+    original_urls: list[str]  # May have multiple if deduplicated
+    source_types: list[str]  # ["rss"], ["gmail"], or ["rss", "gmail"]
     published_at: datetime
     processed_at: datetime
-    embedding: list[float] | None   # 1536-dim OpenAI embedding for similarity
+    embedding: list[float] | None  # 1536-dim OpenAI embedding for similarity
 
 
 # Predefined topic categories for classification
@@ -73,10 +75,11 @@ class CollectionError(TypedDict):
     We log these but don't fail the pipeline - partial results are better
     than no results. Errors are included in the final publication payload.
     """
+
     source_type: Literal["rss", "gmail"]
-    source_id: str          # Which feed/sender failed
-    error_type: str         # Exception class name
-    error_message: str      # Human-readable message
+    source_id: str  # Which feed/sender failed
+    error_type: str  # Exception class name
+    error_message: str  # Human-readable message
     timestamp: datetime
 
 
@@ -103,9 +106,9 @@ class AggregatorState(TypedDict, total=False):
     """
 
     # === Input (set at pipeline start) ===
-    run_id: str                     # Unique ID for this pipeline run
-    run_date: datetime              # When the pipeline was triggered
-    backfill_days: int              # 0 = today only, 14 = initial backfill
+    run_id: str  # Unique ID for this pipeline run
+    run_date: datetime  # When the pipeline was triggered
+    backfill_days: int  # 0 = today only, 14 = initial backfill
 
     # === Collection (parallel nodes merge via operator.add) ===
     # The Annotated type tells LangGraph to concatenate lists from parallel nodes
@@ -119,4 +122,4 @@ class AggregatorState(TypedDict, total=False):
 
     # === Output ===
     persisted_count: int
-    publication_payload: dict       # Final JSON for API response
+    publication_payload: dict  # Final JSON for API response

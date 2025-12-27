@@ -17,8 +17,6 @@ When multiple sources have the same item, we:
 - Merge raw_metadata from all sources
 """
 
-from datetime import datetime
-
 import structlog
 
 from aggregator.graph.state import AggregatorState, RawItem
@@ -67,7 +65,7 @@ def merge_duplicate_items(items: list[RawItem]) -> RawItem:
     # Create merged item
     merged: RawItem = {
         "source_type": primary["source_type"],  # Primary source type
-        "source_id": primary["source_id"],      # Primary source ID
+        "source_id": primary["source_id"],  # Primary source ID
         "item_id": primary["item_id"],
         "title": primary.get("title"),
         "content": primary["content"],

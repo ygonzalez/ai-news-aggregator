@@ -20,7 +20,7 @@ Configuration:
 
 import asyncio
 import hashlib
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 
 import feedparser
@@ -63,7 +63,7 @@ def parse_published_date(entry: dict) -> datetime:
         if parsed := entry.get(field):
             try:
                 # Convert time tuple to datetime
-                return datetime(*parsed[:6], tzinfo=timezone.utc)
+                return datetime(*parsed[:6], tzinfo=UTC)
             except (TypeError, ValueError):
                 continue
 
@@ -77,7 +77,7 @@ def parse_published_date(entry: dict) -> datetime:
 
     # Fallback: use current time (item will be included in results)
     logger.warning("Could not parse date, using current time", entry_title=entry.get("title"))
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def extract_content(entry: dict) -> str:
@@ -189,7 +189,7 @@ async def fetch_single_feed(
                 source_id=feed_url,
                 error_type="HTTPStatusError",
                 error_message=f"HTTP {e.response.status_code}: {e.response.reason_phrase}",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
         )
 
@@ -201,7 +201,7 @@ async def fetch_single_feed(
                 source_id=feed_url,
                 error_type=type(e).__name__,
                 error_message=str(e),
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
         )
 
@@ -213,7 +213,7 @@ async def fetch_single_feed(
                 source_id=feed_url,
                 error_type=type(e).__name__,
                 error_message=str(e),
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
             )
         )
 
@@ -241,7 +241,7 @@ async def rss_collector(
     # Use provided feeds or fall back to defaults
     feeds_to_collect = feeds if feeds is not None else DEFAULT_RSS_FEEDS
 
-    run_date = state.get("run_date", datetime.now(timezone.utc))
+    run_date = state.get("run_date", datetime.now(UTC))
     backfill_days = state.get("backfill_days", 0)
 
     # Calculate cutoff date for filtering
@@ -302,6 +302,7 @@ def create_rss_collector_node(feeds: list[RssFeedConfig] | None = None):
     Returns:
         An async function compatible with LangGraph nodes.
     """
+
     async def node(state: AggregatorState) -> dict:
         return await rss_collector(state, feeds=feeds)
 
