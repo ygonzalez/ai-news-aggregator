@@ -73,8 +73,8 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="postgresql://postgres:postgres@localhost:5432/news_aggregator",
-        description="PostgreSQL connection string",
+        default="postgresql://postgres:postgres@localhost:5433/news_aggregator",
+        description="PostgreSQL connection string (port 5433 to avoid local PostgreSQL conflict)",
     )
 
     # LLM - Anthropic (for summarization)

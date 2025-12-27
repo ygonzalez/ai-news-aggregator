@@ -75,13 +75,18 @@ async def _init_connection(conn: asyncpg.Connection) -> None:
     """
     # Register vector type for pgvector
     # The vector type is stored as text in wire format
-    await conn.set_type_codec(
-        "vector",
-        encoder=_encode_vector,
-        decoder=_decode_vector,
-        schema="public",
-        format="text",
-    )
+    # Note: This may fail if pgvector extension isn't installed yet (e.g., during setup)
+    try:
+        await conn.set_type_codec(
+            "vector",
+            encoder=_encode_vector,
+            decoder=_decode_vector,
+            schema="public",
+            format="text",
+        )
+    except Exception:
+        # Extension not yet installed - this is fine during initial setup
+        pass
 
 
 def _encode_vector(vector: list[float]) -> str:
