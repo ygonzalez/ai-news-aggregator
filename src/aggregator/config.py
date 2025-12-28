@@ -43,13 +43,13 @@ DEFAULT_RSS_FEEDS: list[RssFeedConfig] = [
     RssFeedConfig(name="Decoding AI", url="https://www.decodingai.com/feed"),
     RssFeedConfig(name="Ben's Bites", url="https://www.bensbites.com/feed"),
     RssFeedConfig(name="One Useful Thing", url="https://www.oneusefulthing.org/feed"),
-    # Medium tags
-    RssFeedConfig(name="Medium - AI", url="https://medium.com/feed/tag/ai"),
-    RssFeedConfig(name="Medium - Data Extraction", url="https://medium.com/feed/tag/data-extraction"),
-    RssFeedConfig(name="Medium - Agentic AI", url="https://medium.com/feed/tag/agentic-ai"),
-    RssFeedConfig(name="Medium - LangChain", url="https://medium.com/feed/tag/langchain"),
-    RssFeedConfig(name="Medium - LangGraph", url="https://medium.com/feed/tag/langgraph"),
-    RssFeedConfig(name="Medium - LLM", url="https://medium.com/feed/tag/llm"),
+    # # Medium tags
+    # RssFeedConfig(name="Medium - AI", url="https://medium.com/feed/tag/ai"),
+    # RssFeedConfig(name="Medium - Data Extraction", url="https://medium.com/feed/tag/data-extraction"),
+    # RssFeedConfig(name="Medium - Agentic AI", url="https://medium.com/feed/tag/agentic-ai"),
+    # RssFeedConfig(name="Medium - LangChain", url="https://medium.com/feed/tag/langchain"),
+    # RssFeedConfig(name="Medium - LangGraph", url="https://medium.com/feed/tag/langgraph"),
+    # RssFeedConfig(name="Medium - LLM", url="https://medium.com/feed/tag/llm"),
 ]
 
 # Default Gmail senders (from design doc)

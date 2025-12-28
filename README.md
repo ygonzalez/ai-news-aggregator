@@ -218,6 +218,43 @@ Traces are saved as JSON files with run metadata including:
 
 See the [langsmith-fetch docs](https://docs.smith.langchain.com/langsmith/langsmith-fetch) for more options.
 
+## Frontend
+
+The project includes a React frontend built with Vite and Tailwind CSS.
+
+### Run Frontend Dev Server
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs on http://localhost:5173 and proxies API requests to the backend.
+
+### Development Workflow
+
+Run both servers in separate terminals:
+
+```bash
+# Terminal 1: Start API server
+uv run python -m aggregator.main serve
+
+# Terminal 2: Start frontend dev server
+cd frontend && npm run dev
+```
+
+Then open http://localhost:5173 to view the app.
+
+### Build for Production
+
+```bash
+cd frontend
+npm run build
+```
+
+The built files will be in `frontend/dist/`.
+
 ## Development
 
 ### Run Tests

@@ -35,19 +35,20 @@ logger = structlog.get_logger()
 # - If item_id exists: UPDATE with new values
 UPSERT_NEWS_ITEM_SQL = """
 INSERT INTO news_items (
-    item_id, title, summary, key_points, topics,
+    item_id, title, summary, key_points, topics, article_type,
     relevance_score, original_urls, source_types,
     published_at, processed_at, embedding
 ) VALUES (
-    $1, $2, $3, $4, $5,
-    $6, $7, $8,
-    $9, $10, $11
+    $1, $2, $3, $4, $5, $6,
+    $7, $8, $9,
+    $10, $11, $12
 )
 ON CONFLICT (item_id) DO UPDATE SET
     title = EXCLUDED.title,
     summary = EXCLUDED.summary,
     key_points = EXCLUDED.key_points,
     topics = EXCLUDED.topics,
+    article_type = EXCLUDED.article_type,
     relevance_score = EXCLUDED.relevance_score,
     original_urls = EXCLUDED.original_urls,
     source_types = EXCLUDED.source_types,
@@ -105,6 +106,7 @@ async def persist_single_item(
             item["summary"],
             key_points_json,
             topics_json,
+            item["article_type"],
             item["relevance_score"],
             original_urls_json,
             source_types_json,
@@ -185,6 +187,7 @@ async def persist(state: AggregatorState) -> dict:
 async def get_recent_items(
     limit: int = 20,
     topic: str | None = None,
+    article_type: str | None = None,
     min_relevance: float = 0.0,
 ) -> list[dict]:
     """
@@ -195,6 +198,7 @@ async def get_recent_items(
     Args:
         limit: Maximum number of items to return
         topic: Optional topic filter (e.g., "LLMs")
+        article_type: Optional article type filter ("news" or "tutorial")
         min_relevance: Minimum relevance score
 
     Returns:
@@ -205,20 +209,24 @@ async def get_recent_items(
     # Build query dynamically based on filters
     query = """
         SELECT
-            item_id, title, summary, key_points, topics,
+            item_id, title, summary, key_points, topics, article_type,
             relevance_score, original_urls, source_types,
             published_at, processed_at
         FROM news_items
         WHERE relevance_score >= $1
     """
-    params = [min_relevance]
+    params: list = [min_relevance]
 
     if topic:
         # JSONB containment operator: topics @> '["LLMs"]'
-        query += " AND topics @> $2::jsonb"
+        query += f" AND topics @> ${len(params) + 1}::jsonb"
         params.append(json.dumps([topic]))
 
-    query += " ORDER BY published_at DESC LIMIT $" + str(len(params) + 1)
+    if article_type:
+        query += f" AND article_type = ${len(params) + 1}"
+        params.append(article_type)
+
+    query += f" ORDER BY published_at DESC LIMIT ${len(params) + 1}"
     params.append(limit)
 
     async with pool.acquire() as conn:

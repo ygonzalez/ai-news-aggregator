@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS news_items (
     key_points JSONB NOT NULL,  -- ["point 1", "point 2", ...]
     topics JSONB NOT NULL,       -- ["LLMs", "Research", ...]
 
+    -- Article type classification: "news" or "tutorial"
+    article_type VARCHAR(20) NOT NULL DEFAULT 'news',
+
     -- Relevance score (0.0-1.0) for sorting/filtering
     relevance_score FLOAT NOT NULL,
 
@@ -83,6 +86,10 @@ CREATE INDEX IF NOT EXISTS idx_news_items_topics
 -- For relevance sorting: ORDER BY relevance_score DESC
 CREATE INDEX IF NOT EXISTS idx_news_items_relevance
     ON news_items(relevance_score DESC);
+
+-- For article type filtering: WHERE article_type = 'tutorial'
+CREATE INDEX IF NOT EXISTS idx_news_items_article_type
+    ON news_items(article_type);
 
 -- For semantic similarity search using cosine distance
 -- IVFFlat divides vectors into clusters for faster approximate search

@@ -14,6 +14,7 @@ Usage:
 
 from aggregator.graph.orchestrator import create_graph, get_graph, run_aggregator, run_pipeline
 from aggregator.graph.state import (
+    ARTICLE_TYPES,
     TOPIC_CATEGORIES,
     AggregatorState,
     CollectionError,
@@ -32,5 +33,6 @@ __all__ = [
     "RawItem",
     "ProcessedItem",
     "CollectionError",
+    "ARTICLE_TYPES",
     "TOPIC_CATEGORIES",
 ]

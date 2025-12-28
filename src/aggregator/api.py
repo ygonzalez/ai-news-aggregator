@@ -28,11 +28,12 @@ from typing import Annotated
 
 import structlog
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from aggregator.db import close_db_pool, get_db_pool
 from aggregator.db.connection import check_db_health, check_pgvector_extension
-from aggregator.graph import TOPIC_CATEGORIES, run_aggregator
+from aggregator.graph import ARTICLE_TYPES, TOPIC_CATEGORIES, run_aggregator
 from aggregator.graph.nodes.persist import get_recent_items
 
 logger = structlog.get_logger()
@@ -82,6 +83,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS middleware for frontend development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
 
 # ========================================
 # PYDANTIC MODELS
@@ -126,6 +135,7 @@ class NewsItem(BaseModel):
     summary: str = Field(description="AI-generated summary")
     key_points: list[str] = Field(description="Key takeaways")
     topics: list[str] = Field(description="Topic categories")
+    article_type: str = Field(description="Article type (news or tutorial)")
     relevance_score: float = Field(description="Relevance to AI/ML (0-1)")
     urls: list[str] = Field(description="Original source URLs")
     sources: list[str] = Field(description="Source types (rss, gmail)")
@@ -144,6 +154,12 @@ class TopicsResponse(BaseModel):
     """Response containing available topics."""
 
     topics: list[str] = Field(description="Available topic categories")
+
+
+class ArticleTypesResponse(BaseModel):
+    """Response containing available article types."""
+
+    article_types: list[str] = Field(description="Available article types")
 
 
 # ========================================
@@ -238,17 +254,19 @@ async def trigger_run(
 async def get_items(
     limit: Annotated[int, Query(ge=1, le=100, description="Max items to return")] = 20,
     topic: Annotated[str | None, Query(description="Filter by topic")] = None,
+    article_type: Annotated[str | None, Query(description="Filter by article type (news or tutorial)")] = None,
     min_relevance: Annotated[float, Query(ge=0, le=1, description="Minimum relevance score")] = 0.0,
 ):
     """
     Get recent news items.
 
-    Supports filtering by topic and minimum relevance score.
+    Supports filtering by topic, article type, and minimum relevance score.
     Items are sorted by publication date (newest first).
 
     Args:
         limit: Maximum number of items to return (1-100)
         topic: Optional topic filter (e.g., "LLMs", "AI Safety")
+        article_type: Optional article type filter ("news" or "tutorial")
         min_relevance: Minimum relevance score (0-1)
 
     Returns:
@@ -258,6 +276,7 @@ async def get_items(
         items = await get_recent_items(
             limit=limit,
             topic=topic,
+            article_type=article_type,
             min_relevance=min_relevance,
         )
 
@@ -269,6 +288,7 @@ async def get_items(
                 summary=item["summary"],
                 key_points=item["key_points"],
                 topics=item["topics"],
+                article_type=item.get("article_type", "news"),
                 relevance_score=item["relevance_score"],
                 urls=item["original_urls"],
                 sources=item["source_types"],
@@ -306,7 +326,7 @@ async def get_item(item_id: str):
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                SELECT item_id, title, summary, key_points, topics,
+                SELECT item_id, title, summary, key_points, topics, article_type,
                        relevance_score, original_urls, source_types, published_at
                 FROM news_items
                 WHERE item_id = $1
@@ -325,6 +345,7 @@ async def get_item(item_id: str):
             summary=row["summary"],
             key_points=json.loads(row["key_points"]),
             topics=json.loads(row["topics"]),
+            article_type=row.get("article_type", "news"),
             relevance_score=row["relevance_score"],
             urls=json.loads(row["original_urls"]),
             sources=json.loads(row["source_types"]),
@@ -349,3 +370,14 @@ async def get_topics():
         List of topic category names
     """
     return TopicsResponse(topics=TOPIC_CATEGORIES)
+
+
+@app.get("/article-types", response_model=ArticleTypesResponse, tags=["News"])
+async def get_article_types():
+    """
+    Get available article types.
+
+    Returns:
+        List of article types (news, tutorial)
+    """
+    return ArticleTypesResponse(article_types=ARTICLE_TYPES)

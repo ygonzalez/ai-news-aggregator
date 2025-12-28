@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 
 from aggregator.config import get_settings
 from aggregator.graph.state import (
+    ARTICLE_TYPES,
     TOPIC_CATEGORIES,
     AggregatorState,
     ProcessedItem,
@@ -63,6 +64,11 @@ class ArticleSummary(BaseModel):
         min_length=1,
         max_length=3,
     )
+    article_type: str = Field(
+        description=f"The type of article. Must be one of: {ARTICLE_TYPES}. "
+        "'news' = announcements, industry updates, product launches, events. "
+        "'tutorial' = how-to guides, walkthroughs, educational content, code examples.",
+    )
     relevance_score: float = Field(
         description="Score from 0-1 indicating relevance to AI/ML practitioners. "
         "0=not relevant, 0.3=marginally relevant, 0.7=relevant, 1.0=highly relevant.",
@@ -89,6 +95,9 @@ Guidelines:
 - Be concise but comprehensive
 - For key_points: provide exactly 3-5 distinct takeaways as separate strings in a JSON array
 - For topics: use only values from the allowed list
+- For article_type: classify as "news" or "tutorial"
+  - "news": announcements, industry updates, product launches, company news, events, research papers
+  - "tutorial": how-to guides, step-by-step walkthroughs, educational content, code examples, best practices guides
 - Score relevance based on usefulness to AI/ML practitioners:
   - 0.0-0.3: Off-topic or tangential (business news with no technical content)
   - 0.3-0.5: Marginally relevant (general tech news mentioning AI)
@@ -155,6 +164,7 @@ async def summarize_single_item(
                 "summary": result.summary,
                 "key_points": result.key_points,
                 "topics": result.topics,
+                "article_type": result.article_type,
                 "relevance_score": result.relevance_score,
                 "original_urls": original_urls,
                 "source_types": source_types if isinstance(source_types, list) else [source_types],

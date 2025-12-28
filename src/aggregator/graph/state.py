@@ -12,6 +12,9 @@ import operator
 from datetime import datetime
 from typing import Annotated, Literal, TypedDict
 
+# Article type classification
+ARTICLE_TYPES = ["news", "tutorial"]
+
 
 class RawItem(TypedDict):
     """
@@ -45,6 +48,7 @@ class ProcessedItem(TypedDict):
     summary: str  # 2-3 paragraph summary
     key_points: list[str]  # 3-5 bullet points
     topics: list[str]  # From predefined topic list
+    article_type: str  # "news" or "tutorial"
     relevance_score: float  # 0-1, items < 0.3 are filtered out
     original_urls: list[str]  # May have multiple if deduplicated
     source_types: list[str]  # ["rss"], ["gmail"], or ["rss", "gmail"]
