@@ -41,7 +41,7 @@ def format_item_for_api(item: ProcessedItem) -> dict:
         "summary": item["summary"],
         "key_points": item["key_points"],
         "topics": item["topics"],
-        "relevance_score": item["relevance_score"],
+        "article_type": item["article_type"],
         "urls": item["original_urls"],
         "sources": item["source_types"],
         "published_at": item["published_at"].isoformat(),
@@ -73,9 +73,9 @@ def group_items_by_topic(items: list[ProcessedItem]) -> dict[str, list[dict]]:
             grouped[primary_topic] = []
         grouped[primary_topic].append(formatted)
 
-    # Sort each group by relevance
+    # Sort each group by published date (newest first)
     for topic in grouped:
-        grouped[topic].sort(key=lambda x: x["relevance_score"], reverse=True)
+        grouped[topic].sort(key=lambda x: x["published_at"], reverse=True)
 
     return grouped
 
@@ -102,9 +102,11 @@ def generate_summary_stats(
         for source in item.get("source_types", []):
             source_counts[source] = source_counts.get(source, 0) + 1
 
-    # Relevance distribution
-    high_relevance = sum(1 for i in items if i["relevance_score"] >= 0.7)
-    medium_relevance = sum(1 for i in items if 0.3 <= i["relevance_score"] < 0.7)
+    # Article type distribution
+    type_counts: dict[str, int] = {}
+    for item in items:
+        article_type = item.get("article_type", "unknown")
+        type_counts[article_type] = type_counts.get(article_type, 0) + 1
 
     return {
         "total_items": len(items),
@@ -112,10 +114,7 @@ def generate_summary_stats(
         "collection_errors": len(state.get("collection_errors", [])),
         "topic_distribution": topic_counts,
         "source_distribution": source_counts,
-        "relevance_breakdown": {
-            "high": high_relevance,
-            "medium": medium_relevance,
-        },
+        "article_type_distribution": type_counts,
     }
 
 

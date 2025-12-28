@@ -100,9 +100,6 @@ export function NewsCard({ item }: NewsCardProps) {
             {topic}
           </span>
         ))}
-        <span className="px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-          {Math.round(item.relevance_score * 100)}% relevant
-        </span>
       </div>
 
       <p className="text-gray-600 text-sm mb-4 line-clamp-3">{item.summary}</p>

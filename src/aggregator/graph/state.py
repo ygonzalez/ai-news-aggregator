@@ -40,7 +40,7 @@ class ProcessedItem(TypedDict):
     A news item after LLM processing.
 
     This is what gets stored in the database and served via API.
-    Contains AI-generated summary, key points, and relevance scoring.
+    Contains AI-generated summary and key points.
     """
 
     item_id: str
@@ -49,7 +49,6 @@ class ProcessedItem(TypedDict):
     key_points: list[str]  # 3-5 bullet points
     topics: list[str]  # From predefined topic list
     article_type: str  # "news" or "tutorial"
-    relevance_score: float  # 0-1, items < 0.3 are filtered out
     original_urls: list[str]  # May have multiple if deduplicated
     source_types: list[str]  # ["rss"], ["gmail"], or ["rss", "gmail"]
     published_at: datetime

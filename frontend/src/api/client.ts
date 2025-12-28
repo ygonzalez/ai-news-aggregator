@@ -27,7 +27,6 @@ export interface FetchItemsParams {
   limit?: number
   topic?: string
   articleType?: string
-  minRelevance?: number
 }
 
 export async function fetchItems(params: FetchItemsParams = {}): Promise<ItemsResponse> {
@@ -41,9 +40,6 @@ export async function fetchItems(params: FetchItemsParams = {}): Promise<ItemsRe
   }
   if (params.articleType) {
     searchParams.set('article_type', params.articleType)
-  }
-  if (params.minRelevance !== undefined) {
-    searchParams.set('min_relevance', String(params.minRelevance))
   }
 
   const queryString = searchParams.toString()

@@ -7,10 +7,9 @@ This node:
    - Summary (2-3 paragraphs)
    - Key points (3-5 bullets)
    - Topic classification
-   - Relevance score
+   - Article type (news/tutorial)
 3. Optionally generates embeddings via OpenAI
-4. Filters out low-relevance items (< 0.3)
-5. Returns ProcessedItems ready for persistence
+4. Returns ProcessedItems ready for persistence
 
 LangGraph Integration:
 - Input: AggregatorState with deduplicated_items
@@ -69,12 +68,6 @@ class ArticleSummary(BaseModel):
         "'news' = announcements, industry updates, product launches, events. "
         "'tutorial' = how-to guides, walkthroughs, educational content, code examples.",
     )
-    relevance_score: float = Field(
-        description="Score from 0-1 indicating relevance to AI/ML practitioners. "
-        "0=not relevant, 0.3=marginally relevant, 0.7=relevant, 1.0=highly relevant.",
-        ge=0.0,
-        le=1.0,
-    )
 
 
 # === Prompt Template ===
@@ -98,11 +91,6 @@ Guidelines:
 - For article_type: classify as "news" or "tutorial"
   - "news": announcements, industry updates, product launches, company news, events, research papers
   - "tutorial": how-to guides, step-by-step walkthroughs, educational content, code examples, best practices guides
-- Score relevance based on usefulness to AI/ML practitioners:
-  - 0.0-0.3: Off-topic or tangential (business news with no technical content)
-  - 0.3-0.5: Marginally relevant (general tech news mentioning AI)
-  - 0.5-0.7: Relevant (AI industry news, product announcements)
-  - 0.7-1.0: Highly relevant (technical content, research, tools, best practices)
 """
 
 
@@ -144,7 +132,7 @@ async def summarize_single_item(
             # Call Claude with structured output
             result: ArticleSummary = await llm.ainvoke(prompt)
 
-            log.debug("Claude summarization complete", relevance=result.relevance_score, attempt=attempt)
+            log.debug("Claude summarization complete", attempt=attempt)
 
             # Generate embedding if model provided
             embedding = None
@@ -165,7 +153,6 @@ async def summarize_single_item(
                 "key_points": result.key_points,
                 "topics": result.topics,
                 "article_type": result.article_type,
-                "relevance_score": result.relevance_score,
                 "original_urls": original_urls,
                 "source_types": source_types if isinstance(source_types, list) else [source_types],
                 "published_at": item["published_at"],
@@ -195,7 +182,6 @@ async def summarize_single_item(
 
 async def summarize(
     state: AggregatorState,
-    relevance_threshold: float = 0.3,
     max_concurrent: int = 5,
     generate_embeddings: bool = True,
 ) -> dict:
@@ -204,7 +190,6 @@ async def summarize(
 
     Args:
         state: Current graph state with deduplicated_items
-        relevance_threshold: Minimum relevance score to keep (default 0.3)
         max_concurrent: Max concurrent API calls (default 5)
         generate_embeddings: Whether to generate OpenAI embeddings (default True)
 
@@ -246,32 +231,23 @@ async def summarize(
     tasks = [process_with_semaphore(item) for item in items]
     results = await asyncio.gather(*tasks)
 
-    # Filter out failures and low-relevance items
+    # Filter out failures
     processed_items = []
-    filtered_count = 0
     failed_count = 0
 
     for result in results:
         if result is None:
             failed_count += 1
-        elif result["relevance_score"] < relevance_threshold:
-            filtered_count += 1
-            logger.debug(
-                "Filtered low-relevance item",
-                item_id=result["item_id"],
-                score=result["relevance_score"],
-            )
         else:
             processed_items.append(result)
 
-    # Sort by relevance (highest first)
-    processed_items.sort(key=lambda x: x["relevance_score"], reverse=True)
+    # Sort by published date (newest first)
+    processed_items.sort(key=lambda x: x["published_at"], reverse=True)
 
     logger.info(
         "Summarization complete",
         input_count=len(items),
         output_count=len(processed_items),
-        filtered_low_relevance=filtered_count,
         failed=failed_count,
     )
 
@@ -279,7 +255,6 @@ async def summarize(
 
 
 def create_summarize_node(
-    relevance_threshold: float = 0.3,
     max_concurrent: int = 5,
     generate_embeddings: bool = True,
 ):
@@ -288,10 +263,9 @@ def create_summarize_node(
 
     Usage:
         # In orchestrator.py
-        builder.add_node("summarize", create_summarize_node(relevance_threshold=0.5))
+        builder.add_node("summarize", create_summarize_node(max_concurrent=10))
 
     Args:
-        relevance_threshold: Minimum relevance to keep
         max_concurrent: Max concurrent API calls
         generate_embeddings: Whether to generate embeddings
 
@@ -302,7 +276,6 @@ def create_summarize_node(
     async def node(state: AggregatorState) -> dict:
         return await summarize(
             state,
-            relevance_threshold=relevance_threshold,
             max_concurrent=max_concurrent,
             generate_embeddings=generate_embeddings,
         )

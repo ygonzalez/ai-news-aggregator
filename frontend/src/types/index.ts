@@ -5,7 +5,6 @@ export interface NewsItem {
   key_points: string[]
   topics: string[]
   article_type: string
-  relevance_score: number
   urls: string[]
   sources: string[]
   published_at: string

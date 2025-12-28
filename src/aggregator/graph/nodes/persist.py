@@ -36,12 +36,12 @@ logger = structlog.get_logger()
 UPSERT_NEWS_ITEM_SQL = """
 INSERT INTO news_items (
     item_id, title, summary, key_points, topics, article_type,
-    relevance_score, original_urls, source_types,
+    original_urls, source_types,
     published_at, processed_at, embedding
 ) VALUES (
     $1, $2, $3, $4, $5, $6,
-    $7, $8, $9,
-    $10, $11, $12
+    $7, $8,
+    $9, $10, $11
 )
 ON CONFLICT (item_id) DO UPDATE SET
     title = EXCLUDED.title,
@@ -49,7 +49,6 @@ ON CONFLICT (item_id) DO UPDATE SET
     key_points = EXCLUDED.key_points,
     topics = EXCLUDED.topics,
     article_type = EXCLUDED.article_type,
-    relevance_score = EXCLUDED.relevance_score,
     original_urls = EXCLUDED.original_urls,
     source_types = EXCLUDED.source_types,
     processed_at = EXCLUDED.processed_at,
@@ -107,7 +106,6 @@ async def persist_single_item(
             key_points_json,
             topics_json,
             item["article_type"],
-            item["relevance_score"],
             original_urls_json,
             source_types_json,
             item["published_at"],
@@ -133,7 +131,7 @@ async def persist(state: AggregatorState) -> dict:
 
     This node:
     1. Creates/updates the pipeline run record
-    2. Upserts each processed item
+    2. Upserts each processed item (using savepoints for isolation)
     3. Updates the run record with final counts
 
     Args:
@@ -161,10 +159,23 @@ async def persist(state: AggregatorState) -> dict:
             # Record pipeline run start
             await conn.execute(CREATE_PIPELINE_RUN_SQL, run_id, run_date)
 
-            # Persist each item
+            # Persist each item using savepoints so individual failures
+            # don't abort the entire transaction
             for item in items:
-                if await persist_single_item(conn, item):
-                    persisted_count += 1
+                try:
+                    # Create a savepoint for this item
+                    async with conn.transaction():
+                        success = await persist_single_item(conn, item)
+                        if success:
+                            persisted_count += 1
+                except Exception as e:
+                    # Savepoint is automatically rolled back on exception
+                    logger.error(
+                        "Failed to persist item (savepoint rolled back)",
+                        item_id=item.get("item_id"),
+                        error=str(e),
+                        error_type=type(e).__name__,
+                    )
 
             # Update pipeline run with results
             await conn.execute(
@@ -188,7 +199,6 @@ async def get_recent_items(
     limit: int = 20,
     topic: str | None = None,
     article_type: str | None = None,
-    min_relevance: float = 0.0,
 ) -> list[dict]:
     """
     Query recent news items from the database.
@@ -199,7 +209,6 @@ async def get_recent_items(
         limit: Maximum number of items to return
         topic: Optional topic filter (e.g., "LLMs")
         article_type: Optional article type filter ("news" or "tutorial")
-        min_relevance: Minimum relevance score
 
     Returns:
         List of news items as dicts
@@ -210,12 +219,12 @@ async def get_recent_items(
     query = """
         SELECT
             item_id, title, summary, key_points, topics, article_type,
-            relevance_score, original_urls, source_types,
+            original_urls, source_types,
             published_at, processed_at
         FROM news_items
-        WHERE relevance_score >= $1
+        WHERE 1=1
     """
-    params: list = [min_relevance]
+    params: list = []
 
     if topic:
         # JSONB containment operator: topics @> '["LLMs"]'

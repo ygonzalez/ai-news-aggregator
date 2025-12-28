@@ -29,7 +29,7 @@ export function useNewsItems(params: FetchItemsParams = {}): UseNewsItemsResult 
     } finally {
       setLoading(false)
     }
-  }, [params.limit, params.topic, params.articleType, params.minRelevance])
+  }, [params.limit, params.topic, params.articleType])
 
   const loadTopics = useCallback(async () => {
     try {

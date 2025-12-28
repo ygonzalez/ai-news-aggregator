@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Node.js
+node_modules/
+
 # Secrets - NEVER commit these
 .env
 *.pem
@@ -26,3 +29,6 @@ htmlcov/
 
 # OS
 .DS_Store
+
+# AI Docs
+CLAUDE.md

@@ -53,9 +53,6 @@ CREATE TABLE IF NOT EXISTS news_items (
     -- Article type classification: "news" or "tutorial"
     article_type VARCHAR(20) NOT NULL DEFAULT 'news',
 
-    -- Relevance score (0.0-1.0) for sorting/filtering
-    relevance_score FLOAT NOT NULL,
-
     -- Source tracking - preserved from merge_duplicate_items()
     original_urls JSONB NOT NULL,   -- All URLs where this appeared
     source_types JSONB NOT NULL,    -- ["rss"] or ["rss", "gmail"]
@@ -82,10 +79,6 @@ CREATE INDEX IF NOT EXISTS idx_news_items_published_at
 -- GIN (Generalized Inverted Index) is optimal for JSONB containment queries
 CREATE INDEX IF NOT EXISTS idx_news_items_topics
     ON news_items USING GIN(topics);
-
--- For relevance sorting: ORDER BY relevance_score DESC
-CREATE INDEX IF NOT EXISTS idx_news_items_relevance
-    ON news_items(relevance_score DESC);
 
 -- For article type filtering: WHERE article_type = 'tutorial'
 CREATE INDEX IF NOT EXISTS idx_news_items_article_type
