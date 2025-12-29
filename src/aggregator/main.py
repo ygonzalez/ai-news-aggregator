@@ -31,8 +31,6 @@ How This Works:
 - structlog provides structured logging throughout
 """
 
-# Load .env into os.environ BEFORE importing LangChain modules
-# This ensures LangSmith tracing is configured correctly
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -61,7 +59,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.dev.ConsoleRenderer(),  # Pretty console output for development
+        structlog.dev.ConsoleRenderer(),
     ],
     wrapper_class=structlog.stdlib.BoundLogger,
     context_class=dict,

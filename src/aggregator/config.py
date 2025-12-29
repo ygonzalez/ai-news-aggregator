@@ -14,11 +14,6 @@ Usage:
 from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# === Data Source Configuration ===
-# These are Pydantic models (not settings) - they define the structure
-# of RSS feeds and Gmail senders. Defaults are provided below.
-
-
 class RssFeedConfig(BaseModel):
     """Configuration for a single RSS feed."""
 
@@ -65,29 +60,25 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=False,  # DATABASE_URL == database_url
-        extra="ignore",  # Ignore unknown env vars
+        case_sensitive=False,
+        extra="ignore",
     )
 
-    # Database
     database_url: str = Field(
         default="postgresql://postgres:postgres@localhost:5433/news_aggregator",
         description="PostgreSQL connection string (port 5433 to avoid local PostgreSQL conflict)",
     )
 
-    # LLM - Anthropic (for summarization)
     anthropic_api_key: SecretStr = Field(
         default=...,  # Required - no default
         description="Anthropic API key for Claude",
     )
 
-    # LLM - OpenAI (for embeddings only)
     openai_api_key: SecretStr = Field(
-        default=...,  # Required - no default
+        default=...,
         description="OpenAI API key for embeddings",
     )
 
-    # LangSmith (optional - tracing is auto-enabled when set)
     langsmith_tracing: bool = Field(
         default=False,
         description="Enable LangSmith tracing",
@@ -101,21 +92,6 @@ class Settings(BaseSettings):
         description="LangSmith project name",
     )
 
-    # Gmail OAuth (optional - collector is skipped if not set)
-    gmail_client_id: str | None = Field(
-        default=None,
-        description="Gmail OAuth client ID",
-    )
-    gmail_client_secret: SecretStr | None = Field(
-        default=None,
-        description="Gmail OAuth client secret",
-    )
-    gmail_refresh_token: SecretStr | None = Field(
-        default=None,
-        description="Gmail OAuth refresh token",
-    )
-
-    # Application settings
     log_level: str = Field(
         default="INFO",
         description="Logging level (DEBUG, INFO, WARNING, ERROR)",
@@ -132,10 +108,6 @@ class Settings(BaseSettings):
             ]
         )
 
-
-# Singleton instance - import this in other modules
-# Note: This will raise ValidationError on import if required vars are missing
-# For testing, you can create Settings() with explicit values
 def get_settings() -> Settings:
     """Get settings instance. Use this for lazy loading in tests."""
     return Settings()

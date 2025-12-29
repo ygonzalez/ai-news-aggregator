@@ -53,8 +53,6 @@ async def lifespan(app: FastAPI):
     This runs:
     - Before startup: Initialize database pool
     - After shutdown: Close database pool
-
-    FastAPI 0.93+ uses lifespan instead of on_event decorators.
     """
     # Startup
     logger.info("Starting API server")
@@ -63,8 +61,6 @@ async def lifespan(app: FastAPI):
         logger.info("Database pool initialized")
     except Exception as e:
         logger.error("Failed to initialize database", error=str(e))
-        # Continue anyway - health check will report the issue
-
     yield
 
     # Shutdown
